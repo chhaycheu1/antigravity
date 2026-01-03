@@ -7,6 +7,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+// Use node-fetch for Node.js < 18, built-in fetch for Node.js 18+
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
