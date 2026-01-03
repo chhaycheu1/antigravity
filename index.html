@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAR/USDT Short-Term Trading</title>
+    <meta name="description"
+        content="Professional NEAR trading dashboard with 5-minute candles and technical indicators">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+
+<body>
+    <div class="app">
+        <div class="bg-gradient"></div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>NEAR<span class="accent">/USDT</span></h1>
+                    <span class="timeframe">4 Hour Chart (7 Days)</span>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value connection-status" id="connectionStatus">
+                        <span class="status-dot"></span>
+                        Live
+                    </span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Updated</span>
+                    <span class="stat-value" id="lastUpdate">--:--:--</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="dashboard">
+            <!-- Left: Chart & Indicators -->
+            <div class="chart-panel">
+                <!-- Price Header -->
+                <div class="price-header">
+                    <div class="current-price-section">
+                        <span class="price-label">NEAR/USDT</span>
+                        <span class="current-price" id="currentPrice">$0.0000</span>
+                        <span class="price-change positive" id="priceChange">+0.00%</span>
+                    </div>
+                    <div class="indicator-legend">
+                        <span class="legend-item ema9"><span class="legend-dot"></span>EMA 9</span>
+                        <span class="legend-item ema21"><span class="legend-dot"></span>EMA 21</span>
+                        <span class="legend-item bb"><span class="legend-dot"></span>BB (20,2)</span>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container" id="chartContainer"></div>
+
+                <!-- RSI Panel -->
+                <div class="rsi-panel">
+                    <div class="rsi-header">
+                        <span class="rsi-title">RSI (14)</span>
+                        <span class="rsi-value" id="rsiValue">50.0</span>
+                    </div>
+                    <div class="rsi-bar">
+                        <div class="rsi-zones">
+                            <span class="zone oversold">Oversold</span>
+                            <span class="zone neutral">Neutral</span>
+                            <span class="zone overbought">Overbought</span>
+                        </div>
+                        <div class="rsi-track">
+                            <div class="rsi-fill" id="rsiFill" style="width: 50%"></div>
+                            <div class="rsi-marker" style="left: 30%"></div>
+                            <div class="rsi-marker" style="left: 70%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicator Values -->
+                <div class="indicator-panel">
+                    <div class="indicator-card">
+                        <span class="indicator-label">EMA 9 (Fast)</span>
+                        <span class="indicator-value ema9" id="ema9Value">$0.0000</span>
+                    </div>
+                    <div class="indicator-card">
+                        <span class="indicator-label">EMA 21 (Slow)</span>
+                        <span class="indicator-value ema21" id="ema21Value">$0.0000</span>
+                    </div>
+                    <div class="indicator-card">
+                        <span class="indicator-label">BB Upper</span>
+                        <span class="indicator-value bb" id="bbUpperValue">$0.0000</span>
+                    </div>
+                    <div class="indicator-card">
+                        <span class="indicator-label">BB Lower</span>
+                        <span class="indicator-value bb" id="bbLowerValue">$0.0000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Signals Panel -->
+            <div class="signals-panel">
+                <h2 class="panel-title">Trading Signals</h2>
+
+                <!-- Current Signal Card -->
+                <div class="signal-card" id="signalCard">
+                    <div class="no-signal">
+                        <div class="no-signal-icon">📊</div>
+                        <div class="no-signal-text">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Signal History -->
+                <div class="history-section">
+                    <h3 class="history-title">Recent Signals</h3>
+                    <div class="signal-history" id="signalHistory">
+                        <div class="no-history">Loading signals...</div>
+                    </div>
+                </div>
+
+                <!-- Trading Tips -->
+                <div class="tips-section">
+                    <h3 class="tips-title">Signal Guide</h3>
+                    <div class="tip-item">
+                        <span class="tip-icon long">🚀</span>
+                        <span class="tip-text"><strong>LONG</strong>: Buy signal - price expected to rise</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon short">📉</span>
+                        <span class="tip-text"><strong>SHORT</strong>: Sell signal - price expected to fall</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon">🎯</span>
+                        <span class="tip-text"><strong>TP</strong>: Take Profit target (+1.5%)</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon">🛡️</span>
+                        <span class="tip-text"><strong>SL</strong>: Stop Loss protection (-0.8%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loader">
+                <div class="loader-ring"></div>
+                <div class="loader-ring"></div>
+            </div>
+            <p>Loading NEAR/USDT data...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
