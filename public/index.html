@@ -52,18 +52,27 @@
         <div class="dashboard">
             <!-- Left: Chart & Indicators -->
             <div class="chart-panel">
-                <!-- Price Header -->
+                <!-- Price Header with Timeframe Selector -->
                 <div class="price-header">
                     <div class="current-price-section">
                         <span class="price-label">NEAR/USDT</span>
                         <span class="current-price" id="currentPrice">$0.0000</span>
                         <span class="price-change positive" id="priceChange">+0.00%</span>
+                        <span class="data-source" id="dataSource">Binance</span>
                     </div>
-                    <div class="indicator-legend">
-                        <span class="legend-item ema9"><span class="legend-dot"></span>EMA 9</span>
-                        <span class="legend-item ema21"><span class="legend-dot"></span>EMA 21</span>
-                        <span class="legend-item bb"><span class="legend-dot"></span>BB (20,2)</span>
+                    <div class="timeframe-selector">
+                        <button class="tf-btn" data-interval="5m">5m</button>
+                        <button class="tf-btn active" data-interval="15m">15m</button>
+                        <button class="tf-btn" data-interval="1h">1H</button>
+                        <button class="tf-btn" data-interval="4h">4H</button>
                     </div>
+                </div>
+
+                <!-- Indicator Legend -->
+                <div class="indicator-legend">
+                    <span class="legend-item ema9"><span class="legend-dot"></span>EMA 9</span>
+                    <span class="legend-item ema21"><span class="legend-dot"></span>EMA 21</span>
+                    <span class="legend-item bb"><span class="legend-dot"></span>BB (20,2)</span>
                 </div>
 
                 <!-- Chart -->

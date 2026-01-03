@@ -1,7 +1,7 @@
 /**
  * NEAR Trading Dashboard - Frontend
  * Fetches data from our backend server
- * Real 5-minute candles from Binance via backend proxy
+ * Supports multiple timeframes: 5m, 15m, 1h, 4h
  */
 
 // ============================================
@@ -10,8 +10,8 @@
 const CONFIG = {
     symbol: 'NEARUSDT',
     base: 'NEAR',
-    interval: '5m',
-    candleLimit: 100, // 100 x 5min = ~8 hours
+    interval: '15m', // Default to 15 minutes
+    candleLimit: 100,
 
     // Backend API (same origin, no CORS issues)
     apiBase: '/api',
@@ -33,8 +33,11 @@ const state = {
     candles: [],
     currentPrice: 0,
     priceChange: 0,
+    dataSource: 'binance',
+    currentInterval: '15m',
     indicators: {},
     signals: [],
+    isLoading: false,
     chart: null,
     candleSeries: null,
     ema9Line: null,
@@ -280,34 +283,91 @@ function detectSignals(candles, indicators) {
 // ============================================
 // API FUNCTIONS - CALLS OUR BACKEND
 // ============================================
-async function fetchData() {
+async function fetchData(interval = state.currentInterval) {
     try {
-        console.log('Fetching data from backend...');
+        console.log(`Fetching data for ${interval} timeframe...`);
 
         // Fetch price
         const priceRes = await fetch(`${CONFIG.apiBase}/price/${CONFIG.symbol}`);
         if (!priceRes.ok) throw new Error('Price fetch failed');
         const priceData = await priceRes.json();
 
-        console.log(`Current price: $${priceData.price}`);
+        console.log(`Current price: $${priceData.price} (source: ${priceData.source})`);
 
-        // Fetch candles
-        const klineRes = await fetch(`${CONFIG.apiBase}/klines/${CONFIG.symbol}?interval=${CONFIG.interval}&limit=${CONFIG.candleLimit}`);
+        // Fetch candles with specified interval
+        const klineRes = await fetch(`${CONFIG.apiBase}/klines/${CONFIG.symbol}?interval=${interval}&limit=${CONFIG.candleLimit}`);
         if (!klineRes.ok) throw new Error('Klines fetch failed');
         const klineData = await klineRes.json();
 
-        console.log(`Fetched ${klineData.count} candles (${CONFIG.interval} timeframe)`);
+        console.log(`Fetched ${klineData.count} candles (${klineData.interval}, source: ${klineData.source})`);
 
         return {
             candles: klineData.candles,
             currentPrice: priceData.price,
-            priceChange: priceData.priceChange
+            priceChange: priceData.priceChange,
+            source: klineData.source,
+            interval: klineData.interval
         };
 
     } catch (error) {
         console.error('Backend API failed:', error);
         return null;
     }
+}
+
+// ============================================
+// DATA REFRESH FUNCTION
+// ============================================
+async function refreshData(newInterval = null) {
+    if (state.isLoading) return;
+
+    state.isLoading = true;
+
+    // Update buttons to show loading
+    document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.add('loading'));
+
+    const interval = newInterval || state.currentInterval;
+    const data = await fetchData(interval);
+
+    if (data && data.candles && data.candles.length > 0) {
+        state.candles = data.candles;
+        state.currentPrice = data.currentPrice;
+        state.priceChange = data.priceChange;
+        state.dataSource = data.source;
+        state.currentInterval = data.interval;
+
+        const closes = data.candles.map(c => c.close);
+        const ema9 = calculateEMA(closes, CONFIG.ema.fast);
+        const ema21 = calculateEMA(closes, CONFIG.ema.slow);
+        const bb = calculateBollingerBands(closes, CONFIG.bollinger.period, CONFIG.bollinger.stdDev);
+        const rsi = calculateRSI(closes, CONFIG.rsi.period);
+
+        const indicators = { ema9, ema21, bb, rsi };
+        state.indicators = indicators;
+        state.signals = detectSignals(data.candles, indicators);
+
+        updateChart(data.candles, indicators);
+        updateUI(data.candles, indicators);
+
+        // Update data source badge
+        const sourceEl = document.getElementById('dataSource');
+        if (sourceEl) {
+            sourceEl.textContent = data.source.charAt(0).toUpperCase() + data.source.slice(1);
+        }
+
+        console.log(`Dashboard updated: ${data.candles.length} candles (${data.interval}), ${state.signals.length} signals`);
+    }
+
+    // Update buttons
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+        btn.classList.remove('loading');
+        btn.classList.remove('active');
+        if (btn.dataset.interval === state.currentInterval) {
+            btn.classList.add('active');
+        }
+    });
+
+    state.isLoading = false;
 }
 
 // ============================================
@@ -557,46 +617,29 @@ function updateSignalHistory() {
 async function init() {
     console.log('='.repeat(50));
     console.log('NEAR Trading Dashboard - Frontend');
-    console.log('Using backend API for real Binance data');
+    console.log('Timeframes: 5m, 15m, 1h, 4h');
     console.log('='.repeat(50));
 
     createChart();
 
-    const data = await fetchData();
+    // Add timeframe button handlers
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const interval = btn.dataset.interval;
+            if (interval && interval !== state.currentInterval && !state.isLoading) {
+                refreshData(interval);
+            }
+        });
+    });
 
-    if (!data || !data.candles || data.candles.length === 0) {
-        document.getElementById('loadingOverlay').innerHTML = `
-            <div class="no-signal">
-                <div class="no-signal-icon">❌</div>
-                <div class="no-signal-text">Failed to load data</div>
-                <div class="no-signal-sub">Make sure backend server is running</div>
-            </div>
-        `;
-        return;
-    }
+    // Initial data load
+    await refreshData(CONFIG.interval);
 
-    state.candles = data.candles;
-    state.currentPrice = data.currentPrice;
-    state.priceChange = data.priceChange;
-
-    const closes = data.candles.map(c => c.close);
-    const ema9 = calculateEMA(closes, CONFIG.ema.fast);
-    const ema21 = calculateEMA(closes, CONFIG.ema.slow);
-    const bb = calculateBollingerBands(closes, CONFIG.bollinger.period, CONFIG.bollinger.stdDev);
-    const rsi = calculateRSI(closes, CONFIG.rsi.period);
-
-    const indicators = { ema9, ema21, bb, rsi };
-    state.indicators = indicators;
-
-    state.signals = detectSignals(data.candles, indicators);
-
-    updateChart(data.candles, indicators);
-    updateUI(data.candles, indicators);
-
+    // Hide loading overlay
     document.getElementById('loadingOverlay').classList.add('hidden');
 
-    console.log(`Dashboard ready: ${data.candles.length} candles, ${state.signals.length} signals`);
-    console.log('Refresh page to update data');
+    console.log('Dashboard ready! Click timeframe buttons to switch.');
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
