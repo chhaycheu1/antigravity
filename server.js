@@ -7,7 +7,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const yahooFinance = require('yahoo-finance2').default; // Note: .default because of CommonJS import
+const { YahooFinance } = require('yahoo-finance2');
+const yahooFinance = new YahooFinance();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
