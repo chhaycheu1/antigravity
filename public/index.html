@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEAR/USDT Short-Term Trading</title>
-    <meta name="description"
-        content="Professional NEAR trading dashboard with 5-minute candles and technical indicators">
+    <title>GOLD/USD Professional Trading</title>
+    <meta name="description" content="Professional Gold (XAU/USD) trading dashboard with Yahoo Finance data">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -24,13 +23,16 @@
         <header class="header">
             <div class="logo">
                 <div class="logo-icon">
+                    <!-- Gold Bar Icon SVG -->
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+                        <path d="M10 10h4"></path>
+                        <path d="M12 8v8"></path>
                     </svg>
                 </div>
                 <div class="logo-text">
-                    <h1>NEAR<span class="accent">/USDT</span></h1>
-                    <span class="timeframe">5 Minute Chart (Real Data)</span>
+                    <h1>GOLD<span class="accent">/USD</span></h1>
+                    <span class="timeframe">Real-time Spot Price (XAU)</span>
                 </div>
             </div>
             <div class="header-stats">
@@ -55,10 +57,10 @@
                 <!-- Price Header with Timeframe Selector -->
                 <div class="price-header">
                     <div class="current-price-section">
-                        <span class="price-label">NEAR/USDT</span>
-                        <span class="current-price" id="currentPrice">$0.0000</span>
+                        <span class="price-label">GOLD (XAU/USD)</span>
+                        <span class="current-price" id="currentPrice">$0.00</span>
                         <span class="price-change positive" id="priceChange">+0.00%</span>
-                        <span class="data-source" id="dataSource">Binance</span>
+                        <span class="data-source" id="dataSource">Yahoo</span>
                     </div>
                     <div class="timeframe-selector">
                         <button class="tf-btn" data-interval="5m">5m</button>

@@ -8,9 +8,9 @@
 // CONFIGURATION
 // ============================================
 const CONFIG = {
-    symbol: 'NEARUSDT',
-    base: 'NEAR',
-    interval: '15m', // Default to 15 minutes
+    symbol: 'XAUUSD',
+    base: 'GOLD',
+    interval: '15m', // Yahoo Finance 15m is more reliable than 5m
     candleLimit: 100,
 
     // Backend API (same origin, no CORS issues)
@@ -22,8 +22,9 @@ const CONFIG = {
     rsi: { period: 14, overbought: 70, oversold: 30 },
 
     // Risk management
-    takeProfitPercent: 1.5,
-    stopLossPercent: 0.8,
+    takeProfitPercent: 0.5, // Gold is less volatile than Crypto
+    stopLossPercent: 0.2,   // Tighter stops for Gold
+    updateInterval: 60000   // 1 minute poll
 };
 
 // ============================================
@@ -50,9 +51,9 @@ const state = {
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
-const formatPrice = (price, decimals = 4) => {
+const formatPrice = (price, decimals = 2) => {
     const num = parseFloat(price);
-    if (isNaN(num)) return '$0.0000';
+    if (isNaN(num)) return '$0.00';
     return '$' + num.toFixed(decimals);
 };
 
@@ -616,7 +617,7 @@ function updateSignalHistory() {
 // ============================================
 async function init() {
     console.log('='.repeat(50));
-    console.log('NEAR Trading Dashboard - Frontend');
+    console.log('GOLD Trading Dashboard - Frontend');
     console.log('Timeframes: 5m, 15m, 1h, 4h');
     console.log('='.repeat(50));
 

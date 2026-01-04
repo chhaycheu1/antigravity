@@ -4,29 +4,36 @@
 
 :root {
     --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --bg-card: rgba(18, 18, 26, 0.9);
-    --bg-glass: rgba(255, 255, 255, 0.03);
+    --bg-secondary: #0f1014;
+    --bg-card: rgba(20, 20, 25, 0.95);
+    --bg-glass: rgba(255, 215, 0, 0.03);
+    /* Gold tint */
 
     --text-primary: #ffffff;
-    --text-secondary: #a0a0b0;
-    --text-muted: #606070;
+    --text-secondary: #d4d4d8;
+    --text-muted: #71717a;
 
-    --accent-primary: #6366f1;
-    --accent-secondary: #8b5cf6;
+    /* Gold Theme */
+    --accent-primary: #FFD700;
+    /* Gold */
+    --accent-secondary: #FFA500;
+    /* Dark Orange/Gold */
 
     --long: #00ff88;
     --long-bg: rgba(0, 255, 136, 0.1);
     --short: #ef4444;
     --short-bg: rgba(239, 68, 68, 0.1);
 
-    --ema9: #fbbf24;
-    --ema21: #3b82f6;
-    --bb: #8b5cf6;
+    --ema9: #00ffff;
+    /* Cyan for contrast */
+    --ema21: #ff00ff;
+    /* Magenta for contrast */
+    --bb: #FFD700;
+    /* Gold for BB */
 
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
 
     --transition: 200ms ease;
 }
