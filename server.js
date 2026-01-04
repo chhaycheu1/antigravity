@@ -7,8 +7,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { YahooFinance } = require('yahoo-finance2');
-const yahooFinance = new YahooFinance();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,17 +17,30 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Constants
 const GOLD_SYMBOL = 'XAUUSD=X';
 
+// Yahoo Finance instance (initialized async)
+let yahooFinance = null;
+
+async function initYahooFinance() {
+    // Dynamic import for ESM module in CommonJS
+    const YahooFinanceModule = await import('yahoo-finance2');
+    const YahooFinance = YahooFinanceModule.default;
+    yahooFinance = new YahooFinance();
+    console.log('Yahoo Finance initialized');
+}
+
 // ===========================================
 // PRICE ENDPOINT
 // ===========================================
 app.get('/api/price/:symbol', async (req, res) => {
-    // We ignore the param and always fetch Gold for now, or map it if we expand later
+    if (!yahooFinance) {
+        return res.status(503).json({ error: 'Yahoo Finance not ready' });
+    }
+
     try {
         const quote = await yahooFinance.quote(GOLD_SYMBOL);
 
         console.log(`[Yahoo] Gold Price: $${quote.regularMarketPrice}`);
 
-        // Yahoo Finance format -> Our dashboard format
         res.json({
             source: 'yahoo',
             symbol: 'XAUUSD',
@@ -49,49 +60,48 @@ app.get('/api/price/:symbol', async (req, res) => {
 // KLINES ENDPOINT
 // ===========================================
 app.get('/api/klines/:symbol', async (req, res) => {
-    const intervalArg = req.query.interval || '15m'; // 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
-    // Yahoo intervals: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
+    if (!yahooFinance) {
+        return res.status(503).json({ error: 'Yahoo Finance not ready' });
+    }
+
+    const intervalArg = req.query.interval || '15m';
 
     // Map our frontend intervals to Yahoo
     const intervalMap = {
         '5m': '5m',
         '15m': '15m',
         '1h': '1h',
-        '4h': '1h', // Yahoo doesn't have 4h, use 1h and client can aggregate or just show 1h
+        '4h': '1h',
         '1d': '1d'
     };
 
     const interval = intervalMap[intervalArg] || '15m';
 
-    // Calculate start date based on interval to get enough candles
-    // 100 candles * interval in minutes
+    // Calculate start date
     const now = new Date();
-    const rangeInMinutes = 1500; // default
-    let startDate = new Date(now.getTime() - (rangeInMinutes * 60 * 1000));
+    let startDate;
 
-    if (interval === '5m') startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 1 day
-    if (interval === '15m') startDate = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000)); // 3 days
-    if (interval === '1h') startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); // 7 days
-    if (interval === '1d') startDate = new Date(now.getTime() - (100 * 24 * 60 * 60 * 1000)); // 100 days
+    if (interval === '5m') startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    else if (interval === '15m') startDate = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+    else if (interval === '1h') startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    else startDate = new Date(now.getTime() - (100 * 24 * 60 * 60 * 1000));
 
     try {
-        const queryOptions = {
-            period1: startDate, // Start date
-            interval: interval,  // Interval
-        };
-
-        const result = await yahooFinance.historical(GOLD_SYMBOL, queryOptions);
+        const result = await yahooFinance.chart(GOLD_SYMBOL, {
+            period1: startDate,
+            interval: interval,
+        });
 
         // Transform to our format
-        // Yahoo returns: { date, open, high, low, close, adjClose, volume }
-        const candles = result.map(k => ({
+        const quotes = result.quotes || [];
+        const candles = quotes.map(k => ({
             time: Math.floor(new Date(k.date).getTime() / 1000),
             open: k.open,
             high: k.high,
             low: k.low,
             close: k.close,
-            volume: k.volume
-        })).filter(c => c.close !== null && c.open !== null); // Filter incomplete candles
+            volume: k.volume || 0
+        })).filter(c => c.close !== null && c.open !== null);
 
         console.log(`[Yahoo] Klines: ${candles.length} (${interval})`);
 
@@ -103,21 +113,31 @@ app.get('/api/klines/:symbol', async (req, res) => {
             candles: candles
         });
     } catch (e) {
-        console.error('[Yahoo] Historical Failed:', e.message);
+        console.error('[Yahoo] Chart Failed:', e.message);
         res.status(500).json({ error: 'Failed to fetch klines', details: e.message });
     }
 });
 
 // Health Check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', source: 'Yahoo Finance', symbol: GOLD_SYMBOL });
+    res.json({
+        status: yahooFinance ? 'ok' : 'initializing',
+        source: 'Yahoo Finance',
+        symbol: GOLD_SYMBOL
+    });
 });
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`GOLD Dashboard Active (${GOLD_SYMBOL})`);
+// Start server after initializing Yahoo Finance
+initYahooFinance().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`GOLD Dashboard Active (${GOLD_SYMBOL})`);
+    });
+}).catch(err => {
+    console.error('Failed to initialize Yahoo Finance:', err);
+    process.exit(1);
 });
